@@ -65,6 +65,7 @@ coverage.xml
 *.pyc
 
 .idea/
+.DS_Store
 
 dataset/coco/annotations
 dataset/coco/train2017

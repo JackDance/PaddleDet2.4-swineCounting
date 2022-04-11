@@ -99,9 +99,9 @@ class Pipeline(object):
                  cpu_threads=1,
                  enable_mkldnn=False,
                  output_dir='output',
-                 draw_center_traj=False,
+                 draw_center_traj=False, # 是否绘制跟踪轨迹
                  secs_interval=10,
-                 do_entrance_counting=False):
+                 do_entrance_counting=False): # do_entrance_counting是否统计出入口流量
         self.multi_camera = False
         self.is_video = False
         self.output_dir = output_dir
