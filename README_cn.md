@@ -7,20 +7,23 @@
 
 **飞桨目标检测开发套件，端到端地完成从训练到部署的全流程目标检测应用。**
 
-[![License](https://img.shields.io/badge/license-Apache%202-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/github/release/PaddlePaddle/PaddleDetection.svg)](https://github.com/PaddlePaddle/PaddleDetection/releases)
-![python version](https://img.shields.io/badge/python-3.6+-orange.svg)
-![support os](https://img.shields.io/badge/os-linux%2C%20win%2C%20mac-yellow.svg)
-
+<p align="center">
+    <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache%202-dfd.svg"></a>
+    <a href="https://github.com/PaddlePaddle/PaddleDetection/releases"><img src="https://img.shields.io/github/v/release/PaddlePaddle/PaddleDetection?color=ffa"></a>
+    <a href=""><img src="https://img.shields.io/badge/python-3.7+-aff.svg"></a>
+    <a href=""><img src="https://img.shields.io/badge/os-linux%2C%20win%2C%20mac-pink.svg"></a>
+    <a href="https://github.com/PaddlePaddle/PaddleDetection/stargazers"><img src="https://img.shields.io/github/stars/PaddlePaddle/PaddleDetection?color=ccf"></a>
+</p>
 </div>
 
 ## <img src="https://user-images.githubusercontent.com/48054808/157793354-6e7f381a-0aa6-4bb7-845c-9acf2ecc05c3.png" width="20"/> 产品动态
 
 - 🔥 **2022.3.24：PaddleDetection发布[release/2.4版本](https://github.com/PaddlePaddle/PaddleDetection/tree/release/2.4)**
   
-  - 发布高精度云边一体SOTA目标检测模型[PP-YOLOE](configs/ppyoloe)，COCO数据集精度51.4%，V100预测速度78.1 FPS，支持混合精度训练，训练较PP-YOLOv2加速33%，全系列多尺度模型，满足不同硬件算力需求，可适配服务器、边缘端GPU及其他服务器端AI加速卡。
+  - 发布高精度云边一体SOTA目标检测模型[PP-YOLOE](configs/ppyoloe)，发布s/m/l/x版本，l版本COCO test2017数据集精度51.4%，V100预测速度78.1 FPS，支持混合精度训练，训练较PP-YOLOv2加速33%，全系列多尺度模型，满足不同硬件算力需求，可适配服务器、边缘端GPU及其他服务器端AI加速卡。
   - 发布边缘端和CPU端超轻量SOTA目标检测模型[PP-PicoDet增强版](configs/picodet)，精度提升2%左右，CPU预测速度提升63%，新增参数量0.7M的PicoDet-XS模型，提供模型稀疏化和量化功能，便于模型加速，各类硬件无需单独开发后处理模块，降低部署门槛。
   - 发布实时行人分析工具[PP-Human](deploy/pphuman)，支持行人跟踪、人流量统计、人体属性识别与摔倒检测四大能力，基于真实场景数据特殊优化，精准识别各类摔倒姿势，适应不同环境背景、光线及摄像角度。
+  - 新增[YOLOX](configs/yolox)目标检测模型，支持nano/tiny/s/m/l/x版本，x版本COCO val2017数据集精度51.8%。
 
 - 2021.11.03: PaddleDetection发布[release/2.3版本](https://github.com/PaddlePaddle/PaddleDetection/tree/release/2.3)
   
@@ -70,7 +73,7 @@
 
 - 如果你发现任何PaddleDetection存在的问题或者是建议, 欢迎通过[GitHub Issues](https://github.com/PaddlePaddle/PaddleDetection/issues)给我们提issues。
 
-- 欢迎加入PaddleDetection QQ、微信（添加并回复小助手“检测”）用户群
+- 欢迎加入PaddleDetection QQ、微信用户群（添加并回复小助手“检测”）
   
   <div align="center">
   <img src="https://user-images.githubusercontent.com/48054808/157800129-2f9a0b72-6bb8-4b10-8310-93ab1639253f.jpg"  width = "200" />  
@@ -111,6 +114,8 @@
             <li>YOLOv4</li>  
             <li>PP-YOLOv1/v2</li>
             <li>PP-YOLO-Tiny</li>
+            <li>PP-YOLOE</li>
+            <li>YOLOX</li>
             <li>SSD</li>
             <li>CornerNet-Squeeze</li>
             <li>FCOS</li>  
@@ -136,7 +141,7 @@
         <ul>
             <li>JDE</li>
             <li>FairMOT</li>
-            <li>DeepSort</li>
+            <li>DeepSORT</li>
         </ul>
         <li><b>KeyPoint-Detection</b></li>
         <ul>
@@ -216,6 +221,7 @@
           <li>Color Distort</li>  
           <li>Random Erasing</li>  
           <li>Mixup </li>
+          <li>AugmentHSV</li>
           <li>Mosaic</li>
           <li>Cutmix </li>
           <li>Grid Mask</li>
@@ -244,6 +250,7 @@
 - `Cascade-Faster-RCNN`为`Cascade-Faster-RCNN-ResNet50vd-DCN`，PaddleDetection将其优化到COCO数据mAP为47.8%时推理速度为20FPS
 - `PP-YOLO`在COCO数据集精度45.9%，Tesla V100预测速度72.9FPS，精度速度均优于[YOLOv4](https://arxiv.org/abs/2004.10934)
 - `PP-YOLO v2`是对`PP-YOLO`模型的进一步优化，在COCO数据集精度49.5%，Tesla V100预测速度68.9FPS
+- `PP-YOLOE`是对`PP-YOLO v2`模型的进一步优化，在COCO数据集精度51.4%，Tesla V100预测速度78.1FPS
 - 图中模型均可在[模型库](#模型库)中获取
 
 各移动端模型在COCO数据集上精度mAP和高通骁龙865处理器上预测速度(FPS)对比图。
@@ -293,6 +300,30 @@
   - [数据处理模块](docs/advanced_tutorials/READER.md)
   - [新增检测模型](docs/advanced_tutorials/MODEL_TECHNICAL.md)
 
+### 课程专栏
+
+- **2022.4.19 [产业级目标检测技术与应用](https://aistudio.baidu.com/aistudio/education/group/info/23670)三日课：** 超强目标检测算法矩阵、实时行人分析系统PP-Human、目标检测产业应用全流程拆解与实践
+
+- **2022.3.26 [智慧城市行业](https://aistudio.baidu.com/aistudio/education/group/info/25620)七日课：** 城市规划、城市治理、智慧政务、交通管理、社区治理
+
+### [产业实践范例教程](./industrial_tutorial/README_cn.md)
+
+- [基于PP-PicoDet增强版的路面垃圾检测](https://aistudio.baidu.com/aistudio/projectdetail/3846170?channelType=0&channel=0)
+
+- [基于PP-PicoDet的通信塔识别及Android端部署](https://aistudio.baidu.com/aistudio/projectdetail/3561097)
+
+- [基于Faster-RCNN的瓷砖表面瑕疵检测](https://aistudio.baidu.com/aistudio/projectdetail/2571419)
+
+- [基于PaddleDetection的PCB瑕疵检测](https://aistudio.baidu.com/aistudio/projectdetail/2367089)
+
+- [基于FairMOT实现人流量统计](https://aistudio.baidu.com/aistudio/projectdetail/2421822)
+
+- [基于YOLOv3实现跌倒检测 ](https://aistudio.baidu.com/aistudio/projectdetail/2500639)
+
+- [基于PP-PicoDetv2 的路面垃圾检测](https://aistudio.baidu.com/aistudio/projectdetail/3846170?channelType=0&channel=0)
+
+- [基于人体关键点检测的合规检测](https://aistudio.baidu.com/aistudio/projectdetail/4061642?contributionType=1)
+
 ## <img src="https://user-images.githubusercontent.com/48054808/157829890-a535b8a6-631c-4c87-b861-64d4b32b2d6a.png" width="20"/> 模型库
 
 - 通用目标检测:
@@ -315,15 +346,17 @@
   - HRNet
   - LiteHRNet
 - [多目标跟踪](configs/mot/README.md)
-  - [PP-Tracking](deploy/pptracking/README.md)
+  - [PP-Tracking](deploy/pptracking/README_cn.md)
   - [DeepSORT](configs/mot/deepsort/README_cn.md)
   - [JDE](configs/mot/jde/README_cn.md)
   - [FairMOT](configs/mot/fairmot/README_cn.md)
+  - [ByteTrack](configs/mot/bytetrack/README.md)
 - 垂类领域
   - [行人检测](configs/pedestrian/README.md)
   - [车辆检测](configs/vehicle/README.md)
   - [人脸检测](configs/face_detection/README.md)
-  - [实时行人分析](deploy/pphuman/README.md)
+- 场景化工具
+  - [实时行人分析工具PP-Human](deploy/pphuman/README.md)
 - 比赛冠军方案
   - [Objects365 2019 Challenge夺冠模型](static/docs/featured_model/champion_model/CACascadeRCNN.md)
   - [Open Images 2019-Object Detction比赛最佳单模型](static/docs/featured_model/champion_model/OIDV5_BASELINE_MODEL.md)
@@ -358,6 +391,7 @@
 - 感谢[Chen-Song](https://github.com/Chen-Song)贡献`Swin Faster-RCNN`模型。
 - 感谢[yangyudong](https://github.com/yangyudong2020), [hchhtc123](https://github.com/hchhtc123) 开发PP-Tracking GUI界面
 - 感谢[Shigure19](https://github.com/Shigure19) 开发PP-TinyPose健身APP
+- 感谢[manangoel99](https://github.com/manangoel99)贡献Wandb可视化方式
 
 ## <img src="https://user-images.githubusercontent.com/48054808/157835276-9aab9d1c-1c46-446b-bdd4-5ab75c5cfa48.png" width="20"/> 引用
 

@@ -16,6 +16,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import sys
 import math
 import weakref
 import paddle
@@ -25,6 +26,7 @@ import paddle.optimizer as optimizer
 import paddle.regularizer as regularizer
 
 from ppdet.core.workspace import register, serializable
+import copy
 
 __all__ = ['LearningRate', 'OptimizerBuilder']
 
@@ -209,6 +211,33 @@ class BurninWarmup(object):
         return boundary, value
 
 
+@serializable
+class ExpWarmup(object):
+    """
+    Warm up learning rate in exponential mode
+    Args:
+        steps (int): warm up steps.
+        epochs (int|None): use epochs as warm up steps, the priority
+            of `epochs` is higher than `steps`. Default: None.
+    """
+
+    def __init__(self, steps=5, epochs=None):
+        super(ExpWarmup, self).__init__()
+        self.steps = steps
+        self.epochs = epochs
+
+    def __call__(self, base_lr, step_per_epoch):
+        boundary = []
+        value = []
+        warmup_steps = self.epochs * step_per_epoch if self.epochs is not None else self.steps
+        for i in range(warmup_steps + 1):
+            factor = (i / float(warmup_steps))**2
+            value.append(base_lr * factor)
+            if i > 0:
+                boundary.append(i)
+        return boundary, value
+
+
 @register
 class LearningRate(object):
     """
@@ -225,7 +254,18 @@ class LearningRate(object):
                  schedulers=[PiecewiseDecay(), LinearWarmup()]):
         super(LearningRate, self).__init__()
         self.base_lr = base_lr
-        self.schedulers = schedulers
+        self.schedulers = []
+
+        schedulers = copy.deepcopy(schedulers)
+        for sched in schedulers:
+            if isinstance(sched, dict):
+                # support dict sched instantiate
+                module = sys.modules[__name__]
+                type = sched.pop("name")
+                scheduler = getattr(module, type)(**sched)
+                self.schedulers.append(scheduler)
+            else:
+                self.schedulers.append(sched)
 
     def __call__(self, step_per_epoch):
         assert len(self.schedulers) >= 1
@@ -331,7 +371,8 @@ class ModelEMA(object):
             Ema's parameter are updated with the formula:
            `ema_param = decay * ema_param + (1 - decay) * cur_param`.
             Defaults is 0.9998.
-        use_thres_step (bool): Whether set decay by thres_step or not
+        ema_decay_type (str): type in ['threshold', 'normal', 'exponential'],
+            'threshold' as default.
         cycle_epoch (int): The epoch of interval to reset ema_param and
             step. Defaults is -1, which means not reset. Its function is to
             add a regular effect to ema, which is set according to experience
@@ -341,7 +382,7 @@ class ModelEMA(object):
     def __init__(self,
                  model,
                  decay=0.9998,
-                 use_thres_step=False,
+                 ema_decay_type='threshold',
                  cycle_epoch=-1):
         self.step = 0
         self.epoch = 0
@@ -349,7 +390,7 @@ class ModelEMA(object):
         self.state_dict = dict()
         for k, v in model.state_dict().items():
             self.state_dict[k] = paddle.zeros_like(v)
-        self.use_thres_step = use_thres_step
+        self.ema_decay_type = ema_decay_type
         self.cycle_epoch = cycle_epoch
 
         self._model_state = {
@@ -370,8 +411,10 @@ class ModelEMA(object):
         self.step = step
 
     def update(self, model=None):
-        if self.use_thres_step:
+        if self.ema_decay_type == 'threshold':
             decay = min(self.decay, (1 + self.step) / (10 + self.step))
+        elif self.ema_decay_type == 'exponential':
+            decay = self.decay * (1 - math.exp(-(self.step + 1) / 2000))
         else:
             decay = self.decay
         self._decay = decay
@@ -394,7 +437,8 @@ class ModelEMA(object):
             return self.state_dict
         state_dict = dict()
         for k, v in self.state_dict.items():
-            v = v / (1 - self._decay**self.step)
+            if self.ema_decay_type != 'exponential':
+                v = v / (1 - self._decay**self.step)
             v.stop_gradient = True
             state_dict[k] = v
         self.epoch += 1

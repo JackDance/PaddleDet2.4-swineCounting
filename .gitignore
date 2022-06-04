@@ -83,3 +83,7 @@ ppdet/version.py
 
 # NPU meta folder
 kernel_meta/
+
+# MAC
+*.DS_Store
+

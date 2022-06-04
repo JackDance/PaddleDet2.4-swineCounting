@@ -25,9 +25,11 @@ from tqdm import tqdm
 import numpy as np
 import typing
 from PIL import Image, ImageOps, ImageFile
+
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 import paddle
+import paddle.nn as nn
 import paddle.distributed as dist
 from paddle.distributed import fleet
 from paddle import amp
@@ -65,10 +67,13 @@ class Trainer(object):
         self.is_loaded_weights = False
 
         # build data loader
+        capital_mode = self.mode.capitalize()
         if cfg.architecture in MOT_ARCH and self.mode in ['eval', 'test']:
-            self.dataset = cfg['{}MOTDataset'.format(self.mode.capitalize())]
+            self.dataset = self.cfg['{}MOTDataset'.format(
+                capital_mode)] = create('{}MOTDataset'.format(capital_mode))()
         else:
-            self.dataset = cfg['{}Dataset'.format(self.mode.capitalize())]
+            self.dataset = self.cfg['{}Dataset'.format(capital_mode)] = create(
+                '{}Dataset'.format(capital_mode))()
 
         if cfg.architecture == 'DeepSORT' and self.mode == 'train':
             logger.error('DeepSORT has no need of training on mot dataset.')
@@ -79,7 +84,7 @@ class Trainer(object):
             self.dataset.set_images(images)
 
         if self.mode == 'train':
-            self.loader = create('{}Reader'.format(self.mode.capitalize()))(
+            self.loader = create('{}Reader'.format(capital_mode))(
                 self.dataset, cfg.worker_num)
 
         if cfg.architecture == 'JDE' and self.mode == 'train':
@@ -99,9 +104,22 @@ class Trainer(object):
             self.model = self.cfg.model
             self.is_loaded_weights = True
 
+        if cfg.architecture == 'YOLOX':
+            for k, m in self.model.named_sublayers():
+                if isinstance(m, nn.BatchNorm2D):
+                    m._epsilon = 1e-3  # for amp(fp16)
+                    m._momentum = 0.97  # 0.03 in pytorch
+
         #normalize params for deploy
         if 'slim' in cfg and cfg['slim_type'] == 'OFA':
             self.model.model.load_meanstd(cfg['TestReader'][
+                'sample_transforms'])
+        elif 'slim' in cfg and cfg['slim_type'] == 'Distill':
+            self.model.student_model.load_meanstd(cfg['TestReader'][
+                'sample_transforms'])
+        elif 'slim' in cfg and cfg[
+                'slim_type'] == 'DistillPrune' and self.mode == 'train':
+            self.model.student_model.load_meanstd(cfg['TestReader'][
                 'sample_transforms'])
         else:
             self.model.load_meanstd(cfg['TestReader']['sample_transforms'])
@@ -110,10 +128,11 @@ class Trainer(object):
         if self.use_ema:
             ema_decay = self.cfg.get('ema_decay', 0.9998)
             cycle_epoch = self.cfg.get('cycle_epoch', -1)
+            ema_decay_type = self.cfg.get('ema_decay_type', 'threshold')
             self.ema = ModelEMA(
                 self.model,
                 decay=ema_decay,
-                use_thres_step=True,
+                ema_decay_type=ema_decay_type,
                 cycle_epoch=cycle_epoch)
 
         # EvalDataset build with BatchSampler to evaluate in single device
@@ -354,6 +373,8 @@ class Trainer(object):
     def train(self, validate=False):
         assert self.mode == 'train', "Model not in 'train' mode"
         Init_mark = False
+        if validate:
+            self.cfg.EvalDataset = create("EvalDataset")()
 
         sync_bn = (getattr(self.cfg, 'norm_type', None) == 'sync_bn' and
                    self.cfg.use_gpu and self._nranks > 1)
@@ -537,9 +558,44 @@ class Trainer(object):
                 images,
                 draw_threshold=0.5,
                 output_dir='output',
-                save_txt=False):
+                save_results=False):
         self.dataset.set_images(images)
         loader = create('TestReader')(self.dataset, 0)
+
+        def setup_metrics_for_loader():
+            # mem
+            metrics = copy.deepcopy(self._metrics)
+            mode = self.mode
+            save_prediction_only = self.cfg[
+                'save_prediction_only'] if 'save_prediction_only' in self.cfg else None
+            output_eval = self.cfg[
+                'output_eval'] if 'output_eval' in self.cfg else None
+
+            # modify
+            self.mode = '_test'
+            self.cfg['save_prediction_only'] = True
+            self.cfg['output_eval'] = output_dir
+            self._init_metrics()
+
+            # restore
+            self.mode = mode
+            self.cfg.pop('save_prediction_only')
+            if save_prediction_only is not None:
+                self.cfg['save_prediction_only'] = save_prediction_only
+
+            self.cfg.pop('output_eval')
+            if output_eval is not None:
+                self.cfg['output_eval'] = output_eval
+
+            _metrics = copy.deepcopy(self._metrics)
+            self._metrics = metrics
+
+            return _metrics
+
+        if save_results:
+            metrics = setup_metrics_for_loader()
+        else:
+            metrics = []
 
         imid2path = self.dataset.get_imid2path()
 
@@ -559,6 +615,9 @@ class Trainer(object):
             # forward
             outs = self.model(data)
 
+            for _m in metrics:
+                _m.update(data, outs)
+
             for key in ['im_shape', 'scale_factor', 'im_id']:
                 if isinstance(data, typing.Sequence):
                     outs[key] = data[0][key]
@@ -568,10 +627,15 @@ class Trainer(object):
                 if hasattr(value, 'numpy'):
                     outs[key] = value.numpy()
             results.append(outs)
+
         # sniper
         if type(self.dataset) == SniperCOCODataSet:
             results = self.dataset.anno_cropper.aggregate_chips_detections(
                 results)
+
+        for _m in metrics:
+            _m.accumulate()
+            _m.reset()
 
         for outs in results:
             batch_res = get_infer_results(outs, clsid2catid)
@@ -604,15 +668,7 @@ class Trainer(object):
                 logger.info("Detection bbox results save in {}".format(
                     save_name))
                 image.save(save_name, quality=95)
-                if save_txt:
-                    save_path = os.path.splitext(save_name)[0] + '.txt'
-                    results = {}
-                    results["im_id"] = im_id
-                    if bbox_res:
-                        results["bbox_res"] = bbox_res
-                    if keypoint_res:
-                        results["keypoint_res"] = keypoint_res
-                    save_result(save_path, results, catid2name, draw_threshold)
+
                 start = end
 
     def _get_save_image_name(self, output_dir, image_path):

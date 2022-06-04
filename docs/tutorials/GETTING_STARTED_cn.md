@@ -215,7 +215,7 @@ visualdl --logdir vdl_dir/scalar/
 |    --draw_threshold      |      infer     |  可视化时分数阈值  |  0.5  |  例如`--draw_threshold=0.7`  |
 |      --infer_dir         |       infer     |  用于预测的图片文件夹路径  |  None  |    `--infer_img`和`--infer_dir`必须至少设置一个 |
 |      --infer_img         |       infer     |  用于预测的图片路径  |  None  |  `--infer_img`和`--infer_dir`必须至少设置一个，`infer_img`具有更高优先级  |
-|      --save_txt          |       infer     |  是否在文件夹下将图片的预测结果保存到文本文件中        |  False  |  可选  |
+|      --save_results         |       infer     |  是否在文件夹下将图片的预测结果保存到文件中        |  False  |  可选  |
 
 
 ## 8 模型导出
@@ -245,7 +245,7 @@ PaddleDetection提供了PaddleInference、PaddleServing、PaddleLite多种部署
 ```bash
 python deploy/python/infer.py --model_dir=./output_inference/yolov3_mobilenet_v1_roadsign --image_file=demo/road554.png --device=GPU
 ```
-* 同时`infer.py`提供了丰富的接口，用户进行接入视频文件、摄像头进行预测，更多内容请参考[Python端预测部署](../../deploy/python.md)
+* 同时`infer.py`提供了丰富的接口，用户进行接入视频文件、摄像头进行预测，更多内容请参考[Python端预测部署](../../deploy/python)
 ### PaddleDetection支持的部署形式说明
 |形式|语言|教程|设备/平台|
 |-|-|-|-|

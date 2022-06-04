@@ -48,7 +48,7 @@ ppdet_root=$(pwd)
 #### VOC Data
 
 VOC data is used in [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) competition. Pascal VOC competition not only contains image classification task, but also contains object detection and object segmentation et al., the annotation file contains the ground truth of multiple tasks.
-VOC dataset denotes the data of PAscal VOC competition. when customizeing VOC data, For non mandatory fields in the XML file, please select whether to label or use the default value according to the actual situation.
+VOC dataset denotes the data of Pascal VOC competition. when customizeing VOC data, For non mandatory fields in the XML file, please select whether to label or use the default value according to the actual situation.
 
 ##### VOC Dataset Download  
 
@@ -108,13 +108,6 @@ VOC dataset denotes the data of PAscal VOC competition. when customizeing VOC da
     >>cat test.txt
     VOCdevkit/VOC2007/JPEGImages/000001.jpg VOCdevkit/VOC2007/Annotations/000001.xml
     ...
-
-    # label_list.txt voc list of classes name
-    >>cat label_list.txt
-
-    aeroplane
-    bicycle
-    ...
     ```
 - If the VOC dataset has been downloaded
     You can organize files according to the above data file organization structure.
@@ -136,7 +129,7 @@ The XML file contains the following fields：
         <depth>3</depth>
     </size>
     ```
-- object field, indict each object, including:
+- object field, indicating each object, including:
 
     |      Label       |                                                        Explanation                                                         |
     | :--------------: | :------------------------------------------------------------------------------------------------------------------------: |
@@ -144,7 +137,7 @@ The XML file contains the following fields：
     |       pose       |                               attitude description of the target object (non required field)                               |
     |    truncated     | If the occlusion of the object exceeds 15-20% and is outside the bounding box，mark it as `truncated` (non required field) |
     |    difficult     |                   objects that are difficult to recognize are marked as`difficult` (non required field)                    |
-    | bndbox son laebl |                            (xmin,ymin) top left coordinate, (xmax,ymax) bottom right coordinate                            |
+    | bndbox sub-label |                            (xmin,ymin) top left coordinate, (xmax,ymax) bottom right coordinate                            |
 
 
 #### COCO Data
@@ -250,7 +243,7 @@ There are three processing methods for user data:
   (1) Convert user data into VOC data (only include labels necessary for object detection as required)  
   (2) Convert user data into coco data (only include labels necessary for object detection as required)  
   (3) Customize a reader for user data (for complex data, you need to customize the reader)  
- 
+
 ##### Convert User Data to VOC Data
 After the user dataset is converted to VOC data, the directory structure is as follows (note that the path name and file name in the dataset should not use Chinese as far as possible to avoid errors caused by Chinese coding problems):
 
@@ -331,6 +324,33 @@ dataset/xxx/
 
 ##### Reader of User Define Data  
   If new data in the dataset needs to be added to paddedetection, you can refer to the [add new data source] (../advanced_tutorials/READER.md#2.3_Customizing_Dataset) document section in the data processing document to develop corresponding code to complete the new data source support. At the same time, you can read the [data processing document] (../advanced_tutorials/READER.md) for specific code analysis of data processing
+
+The configuration file for the Dataset exists in the `configs/datasets` folder. For example, the COCO dataset configuration file is as follows:
+```
+metric: COCO # Currently supports COCO, VOC, OID, Wider Face and other evaluation standards
+num_classes: 80 # num_classes: The number of classes in the dataset, excluding background classes
+
+TrainDataset:
+  !COCODataSet
+    image_dir: train2017 # The path where the training set image resides relative to the dataset_dir
+    anno_path: annotations/instances_train2017.json # Path to the annotation file of the training set relative to the dataset_dir
+    dataset_dir: dataset/coco #The path where the dataset is located relative to the PaddleDetection path
+    data_fields: ['image', 'gt_bbox', 'gt_class', 'is_crowd'] # Controls the fields contained in the sample output of the dataset, note data_fields are unique to the trainreader and must be configured
+
+EvalDataset:
+  !COCODataSet
+    image_dir: val2017 # The path where the images of the validation set reside relative to the dataset_dir
+    anno_path: annotations/instances_val2017.json # The path to the annotation file of the validation set relative to the dataset_dir
+    dataset_dir: dataset/coco # The path where the dataset is located relative to the PaddleDetection path
+TestDataset:
+  !ImageFolder
+    anno_path: dataset/coco/annotations/instances_val2017.json # The path of the annotation file,  it is only used to read the category information of the dataset. JSON and TXT formats are supported
+    dataset_dir: dataset/coco # The path of the dataset, note if this row is added, `anno_path` will be 'dataset_dir/anno_path`, if not set or removed, `anno_path` is `anno_path`
+```
+In the YML profile for Paddle Detection, use `!`directly serializes module instances (functions, instances, etc.). The above configuration files are serialized using Dataset.
+
+**Note:**
+Please carefully check the configuration path of the dataset before running. During training or verification, if the path of TrainDataset or EvalDataset is wrong, it will download the dataset automatically. When using a user-defined dataset, if the TestDataset path is incorrectly configured during inference, the category of the default COCO dataset will be used.
 
 
 #### Example of User Data Conversion

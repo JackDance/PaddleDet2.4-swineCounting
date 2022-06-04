@@ -132,8 +132,8 @@ class PPYOLOEHead(nn.Layer):
 
         if self.eval_size:
             anchor_points, stride_tensor = self._generate_anchors()
-            self.register_buffer('anchor_points', anchor_points)
-            self.register_buffer('stride_tensor', stride_tensor)
+            self.anchor_points = anchor_points
+            self.stride_tensor = stride_tensor
 
     def forward_train(self, feats, targets):
         anchors, anchor_points, num_anchors_list, stride_tensor = \
@@ -293,7 +293,7 @@ class PPYOLOEHead(nn.Layer):
         else:
             loss_l1 = paddle.zeros([1])
             loss_iou = paddle.zeros([1])
-            loss_dfl = paddle.zeros([1])
+            loss_dfl = pred_dist.sum() * 0.
         return loss_l1, loss_iou, loss_dfl
 
     def get_loss(self, head_outs, gt_meta):

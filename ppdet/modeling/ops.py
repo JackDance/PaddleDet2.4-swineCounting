@@ -1,15 +1,15 @@
-#   Copyright (c) 2020 PaddlePaddle Authors. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
+# Copyright (c) 2020 PaddlePaddle Authors. All Rights Reserved. 
+#   
+# Licensed under the Apache License, Version 2.0 (the "License");   
+# you may not use this file except in compliance with the License.  
+# You may obtain a copy of the License at   
+#   
+#     http://www.apache.org/licenses/LICENSE-2.0    
+# 
+# Unless required by applicable law or agreed to in writing, software   
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  
+# See the License for the specific language governing permissions and   
 # limitations under the License.
 
 import paddle
@@ -25,10 +25,22 @@ from paddle.fluid.layer_helper import LayerHelper
 from paddle.fluid.data_feeder import check_variable_and_dtype, check_type, check_dtype
 
 __all__ = [
-    'roi_pool', 'roi_align', 'prior_box', 'generate_proposals',
-    'iou_similarity', 'box_coder', 'yolo_box', 'multiclass_nms',
-    'distribute_fpn_proposals', 'collect_fpn_proposals', 'matrix_nms',
-    'batch_norm', 'mish', 'swish', 'identity'
+    'roi_pool',
+    'roi_align',
+    'prior_box',
+    'generate_proposals',
+    'iou_similarity',
+    'box_coder',
+    'yolo_box',
+    'multiclass_nms',
+    'distribute_fpn_proposals',
+    'collect_fpn_proposals',
+    'matrix_nms',
+    'batch_norm',
+    'mish',
+    'silu',
+    'swish',
+    'identity',
 ]
 
 
@@ -40,13 +52,17 @@ def mish(x):
     return F.mish(x) if hasattr(F, mish) else x * F.tanh(F.softplus(x))
 
 
+def silu(x):
+    return F.silu(x)
+
+
 def swish(x):
     return x * F.sigmoid(x)
 
 
-TRT_ACT_SPEC = {'swish': swish}
+TRT_ACT_SPEC = {'swish': swish, 'silu': swish}
 
-ACT_SPEC = {'mish': mish}
+ACT_SPEC = {'mish': mish, 'silu': silu}
 
 
 def get_act_fn(act=None, trt=False):
@@ -268,7 +284,7 @@ def roi_align(input,
             rois_num = paddle.static.data(name='rois_num', shape=[None], dtype='int32')
             align_out = ops.roi_align(input=x,
                                                rois=rois,
-                                               ouput_size=(7, 7),
+                                               output_size=(7, 7),
                                                spatial_scale=0.5,
                                                sampling_ratio=-1,
                                                rois_num=rois_num)
