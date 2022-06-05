@@ -126,6 +126,17 @@ def draw_bbox(image, im_id, catid2name, bboxes, threshold):
             [(xmin + 1, ymin - th), (xmin + tw + 1, ymin)], fill=color)
         draw.text((xmin + 1, ymin - th), text, fill=(255, 255, 255))
 
+    # draw counting, jack add
+    count = 0
+    for dtc in np.array(bboxes):
+        if dtc["score"] > threshold:
+            count += 1 # number of pigs
+
+    text_counting = "Number of pigs: : {}".format(count)
+    print(text_counting)
+    tw_c, th_c = draw.textsize(text_counting)
+    draw.text((10, 10), text_counting, fill=(255, 255, 255))
+
     return image
 
 
