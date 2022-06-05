@@ -1,20 +1,20 @@
 metric: COCO
-num_classes: 80
+num_classes: 1 # modify
 
 TrainDataset:
   !COCODataSet
-    image_dir: train2017
-    anno_path: annotations/instances_train2017.json
-    dataset_dir: dataset/coco
+    image_dir: train # modify
+    anno_path: annotations/instance_train.json # modify
+    dataset_dir: dataset/swineCounting # modify
     data_fields: ['image', 'gt_bbox', 'gt_class', 'is_crowd']
 
 EvalDataset:
   !COCODataSet
-    image_dir: val2017
-    anno_path: annotations/instances_val2017.json
-    dataset_dir: dataset/coco
+    image_dir: val # modify
+    anno_path: annotations/instance_val.json # modify
+    dataset_dir: dataset/swineCounting # modify
 
 TestDataset:
   !ImageFolder
-    anno_path: annotations/instances_val2017.json # also support txt (like VOC's label_list.txt)
-    dataset_dir: dataset/coco # if set, anno_path will be 'dataset_dir/anno_path'
+    anno_path: annotations/instance_val.json # also support txt (like VOC's label_list.txt)
+    dataset_dir: dataset/swineCounting # if set, anno_path will be 'dataset_dir/anno_path'

@@ -1,4 +1,4 @@
-epoch: 300
+epoch: 300 # modify
 
 LearningRate:
   base_lr: 0.025
