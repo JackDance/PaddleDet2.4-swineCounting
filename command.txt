@@ -1,0 +1,7 @@
+
+# infer for image directory
+python tools/infer.py -c configs/ppyoloe/ppyoloe_crn_s_300e_coco.yml \
+        --infer_dir=dataset/swineCounting/test/ \
+        --draw_threshold 0.5 \
+        -o weights=output/ppyoloe_crn_s_300e_coco/best_model \
+        --output_dir output/ppyolove_inferred_imgs
