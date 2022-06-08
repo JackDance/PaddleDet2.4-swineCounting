@@ -18,7 +18,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 import cv2
 import math
 
@@ -41,7 +41,7 @@ def visualize_results(image,
     Visualize bbox and mask results
     """
     if bbox_res is not None:
-        image = draw_bbox(image, im_id, catid2name, bbox_res, threshold)
+        image = draw_bbox_and_counting(image, im_id, catid2name, bbox_res, threshold)
     if mask_res is not None:
         image = draw_mask(image, im_id, mask_res, threshold)
     if segm_res is not None:
@@ -126,16 +126,72 @@ def draw_bbox(image, im_id, catid2name, bboxes, threshold):
             [(xmin + 1, ymin - th), (xmin + tw + 1, ymin)], fill=color)
         draw.text((xmin + 1, ymin - th), text, fill=(255, 255, 255))
 
+    return image
+
+
+def draw_bbox_and_counting(image, im_id, catid2name, bboxes, threshold):
+    """
+    Draw bbox on image
+    """
+    draw = ImageDraw.Draw(image)
+
+    catid2color = {}
+    color_list = colormap(rgb=True)[:40]
+    for dt in np.array(bboxes):
+        if im_id != dt['image_id']:
+            continue
+        catid, bbox, score = dt['category_id'], dt['bbox'], dt['score']
+        if score < threshold:
+            continue
+
+        if catid not in catid2color:
+            idx = np.random.randint(len(color_list))
+            catid2color[catid] = color_list[idx]
+        color = tuple(catid2color[catid])
+
+        # draw bbox
+        if len(bbox) == 4:
+            # draw bbox
+            xmin, ymin, w, h = bbox
+            xmax = xmin + w
+            ymax = ymin + h
+            draw.line(
+                [(xmin, ymin), (xmin, ymax), (xmax, ymax), (xmax, ymin),
+                 (xmin, ymin)],
+                width=2,
+                fill=color)
+        elif len(bbox) == 8:
+            x1, y1, x2, y2, x3, y3, x4, y4 = bbox
+            draw.line(
+                [(x1, y1), (x2, y2), (x3, y3), (x4, y4), (x1, y1)],
+                width=2,
+                fill=color)
+            xmin = min(x1, x2, x3, x4)
+            ymin = min(y1, y2, y3, y4)
+        else:
+            logger.error('the shape of bbox must be [M, 4] or [M, 8]!')
+
+        # draw label
+        text = "{} {:.2f}".format(catid2name[catid], score)
+        tw, th = draw.textsize(text)
+        draw.rectangle(
+            [(xmin + 1, ymin - th), (xmin + tw + 1, ymin)], fill=color)
+        draw.text((xmin + 1, ymin - th), text, fill=(255, 255, 255))
+
     # draw counting, jack add
     count = 0
     for dtc in np.array(bboxes):
         if dtc["score"] > threshold:
             count += 1 # number of pigs
 
-    text_counting = "Number of pigs: : {}".format(count)
+    text_counting = "Number of pigs: {}".format(count)
+
+    # print counting info in teminal
     print(text_counting)
-    tw_c, th_c = draw.textsize(text_counting)
-    draw.text((10, 10), text_counting, fill=(255, 255, 255))
+
+    fontsize = 50
+    ft = ImageFont.truetype("./arial.ttf", fontsize)
+    draw.text((10, 10), text_counting, font=ft, fill=(255, 0, 0))
 
     return image
 

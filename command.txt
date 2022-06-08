@@ -5,3 +5,9 @@ python tools/infer.py -c configs/ppyoloe/ppyoloe_crn_s_300e_coco.yml \
         --draw_threshold 0.5 \
         -o weights=output/ppyoloe_crn_s_300e_coco/best_model \
         --output_dir output/ppyolove_inferred_imgs
+
+# infer for single image
+python tools/infer.py -c configs/ppyoloe/ppyoloe_crn_s_300e_coco.yml \
+        --infer_img=dataset/swineCounting/test/d4_1597277520_img_2.jpg \
+        --draw_threshold 0.6 \
+        -o weights=output/ppyoloe_crn_s_300e_coco/best_model
