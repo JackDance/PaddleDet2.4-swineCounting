@@ -187,7 +187,7 @@ def draw_bbox_and_counting(image, im_id, catid2name, bboxes, threshold):
     text_counting = "Number of pigs: {}".format(count)
 
     # print counting info in teminal
-    print(text_counting)
+    logger.info(text_counting)
 
     fontsize = 50
     ft = ImageFont.truetype("./arial.ttf", fontsize)
