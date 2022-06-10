@@ -843,16 +843,19 @@ def print_arguments(args):
 
 
 def main():
+    # 加载导出模型的配置文件infer_cfg.yml
     deploy_file = os.path.join(FLAGS.model_dir, 'infer_cfg.yml')
     with open(deploy_file) as f:
         yml_conf = yaml.safe_load(f)
     arch = yml_conf['arch']
+    # 确定detector_func的类型
     detector_func = 'Detector'
     if arch == 'SOLOv2':
         detector_func = 'DetectorSOLOv2'
     elif arch == 'PicoDet':
         detector_func = 'DetectorPicoDet'
 
+    # 配置并加载模型 (相当于实例化了该脚本中的Detector类)
     detector = eval(detector_func)(
         FLAGS.model_dir,
         device=FLAGS.device,
@@ -868,6 +871,7 @@ def main():
         threshold=FLAGS.threshold,
         output_dir=FLAGS.output_dir)
 
+    # 数据（图像）获取，预处理，模型推理，结果后处理。这几个步骤都在detector.predict_video / predict_image函数中进行了集成。
     # predict from video file or camera video stream
     if FLAGS.video_file is not None or FLAGS.camera_id != -1:
         detector.predict_video(FLAGS.video_file, FLAGS.camera_id)
@@ -906,4 +910,5 @@ if __name__ == '__main__':
         FLAGS.enable_mkldnn == False and FLAGS.enable_mkldnn_bfloat16 == True
     ), 'To enable mkldnn bfloat, please turn on both enable_mkldnn and enable_mkldnn_bfloat16'
 
+    # 主函数
     main()
