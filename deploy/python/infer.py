@@ -709,7 +709,7 @@ def load_predictor(model_dir,
         os.path.join(model_dir, 'model.pdiparams'))
     if device == 'GPU':
         # initial GPU memory(M), device ID
-        config.enable_use_gpu(200, 0)
+        config.enable_use_gpu(200, 0) # 初始化200M显存，使用GPU ID为0
         # optimize graph and fuse op
         config.switch_ir_optim(True)
     elif device == 'XPU':
@@ -736,6 +736,7 @@ def load_predictor(model_dir,
         'trt_fp32': Config.Precision.Float32,
         'trt_fp16': Config.Precision.Half
     }
+    # 开启TensortRT预测，可提升GPU预测性能，需要使用带TensorRT的预测库
     if run_mode in precision_map.keys():
         config.enable_tensorrt_engine(
             workspace_size=(1 << 25) * batch_size,
