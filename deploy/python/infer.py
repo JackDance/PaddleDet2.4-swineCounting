@@ -155,10 +155,10 @@ class Detector(object):
             input_im_lst.append(im)
             input_im_info_lst.append(im_info)
         inputs = create_inputs(input_im_lst, input_im_info_lst)
-        input_names = self.predictor.get_input_names()
+        input_names = self.predictor.get_input_names() # 获取模型所有输入Tensor的名称
         for i in range(len(input_names)):
-            input_tensor = self.predictor.get_input_handle(input_names[i])
-            input_tensor.copy_from_cpu(inputs[input_names[i]])
+            input_tensor = self.predictor.get_input_handle(input_names[i]) # 获取输入Tensor的指针
+            input_tensor.copy_from_cpu(inputs[input_names[i]]) # 将data中的数据拷贝到tensor中
 
         return inputs
 
@@ -300,6 +300,9 @@ class Detector(object):
             Path(self.output_dir).mkdir(exist_ok=True)
             self.format_coco_results(image_list, results, save_file=save_file)
 
+        # 加入计数函数,jack
+        self.bbox_counting(image_list, results)
+
         results = self.merge_batch_result(results)
         return results
 
@@ -406,6 +409,27 @@ class Detector(object):
 
         return coco_results
 
+    # 根据format_coco_results函数，实现计数功能, jack
+    def bbox_counting(self, image_list, results):
+        per_result = {
+            'image_file': image_list,
+            'count': 0,
+        }
+        count = 0
+
+        for result in results:
+            if 'boxes' in result: # 判断是否有检测到目标
+                for box in result['boxes'].tolist(): #
+                    if box[1] > self.threshold: # 判断检测到的bbox的置信度是否大于设定阈值
+                        count += 1
+                per_result = {
+                    'image_file':image_list,
+                    'count':count,
+                }
+            else:
+                raise RuntimeError('')
+
+        print(per_result)
 
 class DetectorSOLOv2(Detector):
     """
